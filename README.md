@@ -7,6 +7,7 @@ AMD does this perfectly fine with Radeon Chill, but NVDIA doesn't care
 
 ## How
 ### Requirements :
+- Python & [Pynput](https://pypi.org/project/pynput/)
 - [RTSS](https://www.guru3d.com/page/rivatuner-rtss-homepage/)
 - [rtss-cli](https://github.com/xanderfrangos/rtss-cli)
 
