@@ -1,13 +1,10 @@
 from pynput import keyboard
 from pynput import mouse
-from threading import Timer
 import time
 import subprocess
 
 ##### settings
-# config_file = "testfile.cfg"
-# config_file = "C:/Logiciels/RivaTuner Statistics Server/Profiles/ffxiv_dx11.exe.cfg"
-app = "ffxiv_dx11.exe"
+app = "ffxiv_dx11.exe" # or "Global"
 rtss_cli = "C:/Logiciels/RivaTuner Statistics Server/Profiles/rtss-cli.exe"
 
 default_fps = 60 # max fps
@@ -15,24 +12,26 @@ reduced_fps = 45 # fps when not active & bellow reduced_threshold recent actions
 low_fps = 30 # fps after idle_1_timer
 min_fps = 10 # fps after idle_2_timer
 
-active_timer = 30 # time in seconds before fps can be reduced again after an active_key was pressed
-reduced_threshold = 30 # number of actions. important_keys add more actions. chat_key removes actions. -1 action per second.
+active_timer = 20 # time in seconds before fps can be reduced again after increasing
+reduced_threshold = 30 # number of actions. important_keys add more actions. chat_keys removes actions. -1 action per second.
 idle_1_timer = 30 # seconds
 idle_2_timer = 300 # seconds
+loop_interval = 1 # s
+decay = 1 # how many actions to decay per loop
 
-active_keys = ["Key.ctrl_l", "&", "é", "\"", "\'", "(", "-", "è", "_", "ç", "à", ")", "=", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
-important_keys = ["z", "q", "s", "d"]
-chat_key = ["Key.enter"]
+active_keys = ["Key.ctrl_l"] 
+important_keys = ["z", "q", "s", "d", "&", "é", "\"", "\'", "(", "-", "è", "_", "ç", "à", ")", "=", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
+chat_keys = ["Key.enter"]
 # Button.left
 #####
 
 actions = 0
-next_tick = 1
+pause_until = 0
 last_action = time.time()
 current_fps = default_fps
 
 def apply_idle():
-    global actions, next_tick
+    global actions
 
     actions = max(0, min(actions, reduced_threshold+15))
     fps = default_fps
@@ -45,18 +44,13 @@ def apply_idle():
         fps = low_fps
 
     print(f"actions: {actions}, current fps: {fps}")
-    actions -= 1
-    next_tick = 1
+    actions -= decay
     change_fps_limit(fps)
-    run()
 
 
 def force_active(duration=active_timer):
-    global next_tick
-    timer.cancel()
     change_fps_limit(default_fps)
-    next_tick = duration
-    run()
+    pause_timer(duration)
 
 
 def on_input(key):
@@ -66,7 +60,7 @@ def on_input(key):
 
     if key in active_keys:
         force_active()
-    elif key in chat_key:
+    elif key in chat_keys:
         actions -= 30
     elif key in important_keys:
         actions += 5
@@ -75,33 +69,23 @@ def on_input(key):
 
 
 def change_fps_limit(fps):
-    global current_fps, next_tick
+    global current_fps
 
     if fps == current_fps:
         return
     elif fps > current_fps:
-        next_tick = 10 # prevent changing fps (decreasing) too often
-        
-    subprocess.run(
-        f'"{rtss_cli}" property:set {app} FramerateLimit {fps}',
-        shell=True
-    )
-    print(f"setting fps to: {fps}")
+        pause_timer(active_timer) # prevent changing fps (decreasing) too often
+    
     current_fps = fps
-    # with open(config_file, "r+") as file:
-    #     content = file.read()
-    #     fps_pos = content.find("[Framerate]\nLimit=") + 19
-    #     file.seek(fps_pos)
-    #     file.write(str(fps))
 
-
-def run():
-    global timer
-    timer = Timer(next_tick, apply_idle)
-    timer.start()
-
-timer = Timer(next_tick, apply_idle)
-run()
+    print(f"setting fps to: {fps}")
+    subprocess.run([
+        rtss_cli,
+        "property:set",
+        app,
+        "FramerateLimit",
+        str(fps)
+    ])
 
 
 def on_release(key):
@@ -115,10 +99,29 @@ def on_click(x, y, button, pressed):
         on_input(str(button))
 
 kb_listener = keyboard.Listener(on_release=on_release)
-m_listener = mouse.Listener(on_click=on_click)
-
 kb_listener.start()
+
+m_listener = mouse.Listener(on_click=on_click)
 m_listener.start()
 
-kb_listener.join()
-m_listener.join()
+
+def pause_timer(duration):
+    global pause_until
+    pause_until = time.time() + duration
+
+def start():
+    while True:
+        now = time.time()
+
+        if now < pause_until:
+            sleep_time = pause_until - now
+            time.sleep(min(sleep_time, 1))
+            continue
+
+        apply_idle()
+        time.sleep(loop_interval)
+
+start()
+
+# kb_listener.join()
+# m_listener.join()

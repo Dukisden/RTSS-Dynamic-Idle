@@ -25,5 +25,5 @@ AMD does this perfectly fine with Radeon Chill, but NVDIA doesn't care
 ### Limitations
 - Made with a specific use case in mind (ff14)
 - Does not care whether inputs are made on the game window or elsewhere
-- Does not care for mouse movements
+- Does not care for mouse movements or scroll
 - You'll have to automate script startup on your own
