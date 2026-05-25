@@ -88,13 +88,10 @@ def change_fps_limit(fps):
             logger.write(f"setting fps to: {fps}")
         print(f"setting fps to: {fps}")
 
-    subprocess.run([
-        rtss_cli,
-        "property:set",
-        app,
-        "FramerateLimit",
-        str(fps)
-    ])
+    subprocess.run(
+        f'"{rtss_cli}" property:set {app} FramerateLimit {fps}',
+        shell=True
+    )
 
 
 def on_release(key):
