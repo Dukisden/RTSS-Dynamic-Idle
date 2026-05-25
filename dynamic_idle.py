@@ -4,6 +4,7 @@ import time
 import subprocess
 
 ##### settings
+debug = True
 app = "ffxiv_dx11.exe" # or "Global"
 rtss_cli = "C:/Logiciels/RivaTuner Statistics Server/Profiles/rtss-cli.exe"
 
@@ -43,7 +44,11 @@ def apply_idle():
     elif time.time() - last_action > idle_1_timer:
         fps = low_fps
 
-    print(f"actions: {actions}, current fps: {fps}")
+    if debug:
+        with open ('dynamic_idle_log.log', 'a') as logger:
+            logger.write(f"actions: {actions}, current fps: {fps}\n")
+        print(f"actions: {actions}, current fps: {fps}")
+
     actions -= decay
     change_fps_limit(fps)
 
@@ -78,7 +83,11 @@ def change_fps_limit(fps):
     
     current_fps = fps
 
-    print(f"setting fps to: {fps}")
+    if debug:
+        with open ('dynamic_idle_log.log', 'a') as logger:
+            logger.write(f"setting fps to: {fps}")
+        print(f"setting fps to: {fps}")
+
     subprocess.run([
         rtss_cli,
         "property:set",
