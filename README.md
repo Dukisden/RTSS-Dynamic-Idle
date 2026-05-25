@@ -2,7 +2,7 @@
 Python script to dynamically change the fps cap of a game based on idleness.
 
 ## Why
-Saves power, also reduce heat in the room (summer is too darn hot)
+Saves power, also reduces heat in the room (summer is too darn hot)  
 AMD does this perfectly fine with Radeon Chill, but NVDIA doesn't care
 
 ## How
